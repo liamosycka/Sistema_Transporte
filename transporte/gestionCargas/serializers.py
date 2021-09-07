@@ -13,7 +13,7 @@ class SolicitudTransporteSerializer(serializers.ModelSerializer):
     class Meta:
         model= SolicitudTransporte
         fields='__all__'
-
+        
 class RemitoSerializer(serializers.ModelSerializer):
     class Meta:
         model= Remito

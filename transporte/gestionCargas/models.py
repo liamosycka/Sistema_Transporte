@@ -37,7 +37,7 @@ class EstadoRemito(models.Model):
 
 class SolicitudTransporte(models.Model):
     id_solicitud=models.CharField(max_length=3, primary_key=True)
-    fecha=models.DateTimeField()
+    fecha=models.DateField()
     direccion_origen=models.CharField(max_length=20)
     destinatario=models.CharField(max_length=20)
     direccion_destinatario=models.CharField(max_length=20)
