@@ -97,6 +97,7 @@ class Remito(models.Model):
     fecha_asignacion=models.DateField()
     valor_flete=models.FloatField()
     valor_contrareembolso=models.FloatField()
+    medio_pago=models.CharField(max_length=20, choices=MEDIO_PAGO)
     estado_actual=models.ManyToManyField(EstadoRemito)
     solicitud_transporte=models.OneToOneField(SolicitudTransporte, on_delete=models.RESTRICT, blank=True)
 

@@ -12,7 +12,7 @@ from .serializers import ChoferSerializer, EncargadoSerializer, TipoEstadoRemito
 from .models import EstadoRemito, Particular, SolicitudTransporte, Cliente, Bulto, Localidad, Empresa, Viaje, Remito
 from .models import Chofer, Encargado, TipoEstadoRemito
 
-"""Viewsets: Usar Router (descomentar en urls.py)
+"""
 ----------------------------------------------------------------------------------------"""
 class LocalidadViewSet(viewsets.ModelViewSet):
     serializer_class=LocalidadSerializer
