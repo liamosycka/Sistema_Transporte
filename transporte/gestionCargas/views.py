@@ -1,5 +1,6 @@
 from datetime import date
 import json
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
@@ -74,7 +75,6 @@ class CrearSolicitudView(APIView):
         direccion=cliente.direccion
         nombre=cliente.nombre
         localidad=cliente.localidad.codigo_postal
-        print("loc del cliente: ", localidad)
         body=request.data
         if opcion_dest_remit==0:
             #Soy remitente
@@ -112,6 +112,164 @@ class AgregarBultosView(APIView):
         bulto.save()
         return Response(BultoSerializer(bulto).data)
 
+class AltaRemitoView(APIView):
+    def post(self, request):
+        body=request.data
+        nro_remito=body['nro_remito']
+        fecha=date.today()
+        valor_flete=body['flete']
+        valor_contra=body['contra']
+        legajo_chofer=body['legajo_chofer']
+        chofer=Chofer.objects.get(pk=legajo_chofer)
+        remito=Remito(nro_remito=nro_remito, fecha_asignacion=fecha, valor_flete=valor_flete, valor_contrareembolso=valor_contra, legajo_chofer=chofer)
+        remito.save()
+
+        #crear estado asignado
+        fecha_in_estado=date.today()
+        tipo_estado_ob=TipoEstadoRemito.objects.get(pk='asignado')
+        nuevo_remito_nro=Remito.objects.last().pk
+        nuevo_remito=Remito.objects.get(pk=nuevo_remito_nro)
+        estado=EstadoRemito(fecha_inicio=fecha_in_estado, tipo_estado=tipo_estado_ob, actual=True, remito=nuevo_remito)
+        estado.save()
+        return Response(EstadoRemitoSerializer(estado).data)
+
+class RemitosChoferEstado(APIView):
+    def get(self, request):
+        body=request.data
+        legajo=body['legajo']
+        estado=body['estado']
+        remitos=Remito.objects.filter(legajo_chofer=legajo)
+        remitos_estado=[]
+        for remito in remitos:
+            remitos_estado+=EstadoRemito.objects.filter(tipo_estado=estado, remito=remito).values('remito')
+
+        return Response(remitos_estado)
+
+class AsociarSolRemito(APIView):
+    def put(self, request):
+        body=request.data
+        nro_remito=body['remito']
+        id_solicitud=body['sol']
+        medio_pago=body['m_pago']
+        valor_contra=body['contra']
+        remito=Remito.objects.get(pk=nro_remito)
+        solicitud=SolicitudTransporte.objects.get(pk=id_solicitud)
+        #flete=CalcularValorFlete(remito)
+        flete=1200
+        remito.medio_pago=medio_pago
+        remito.valor_contrareembolso=valor_contra
+        remito.valor_flete=flete
+        remito.solicitud_transporte=solicitud
+        remito.save()
+
+        #actualizar estado del remito
+        fecha_in_estado=date.today()
+        tipo_estado_anterior=TipoEstadoRemito.objects.get(pk='asignado')
+        tipo_estado_nuevo=TipoEstadoRemito.objects.get(pk='en_circulacion')
+        estado_anterior=EstadoRemito.objects.get(tipo_estado=tipo_estado_anterior, remito=remito)
+        estado_anterior.fecha_fin=date.today()
+        estado_anterior.actual=False
+        estado_anterior.save()
+        estado_nuevo=EstadoRemito(fecha_inicio=fecha_in_estado, tipo_estado=tipo_estado_nuevo, actual=True, remito=remito)
+        estado_nuevo.save()
+
+        return Response(RemitoSerializer(remito).data)
+
+class ViajeFechaView(APIView):
+    def get(self, request, fecha):
+        viajes=Viaje.objects.filter(fecha_salida=fecha)
+        return Response(ViajeSerializer(viajes, many=True).data)
+
+class RemitosParaViaje(APIView):
+    def get(self, request, id_viaje):
+        localidadesViaje=Viaje.objects.get(pk=id_viaje).localidades.all()
+        print(localidadesViaje)
+        num_remitos_estados=EstadoRemito.objects.filter(Q(tipo_estado='en_circulacion')|Q(tipo_estado='segunda_entrega'))
+        remitos=[]
+        for num_remito in num_remitos_estados:
+            remitos.append(num_remito.remito)
+        print("Remitos: ", remitos)
+        remitos_viaje=[]
+        for remito in remitos:
+            if remito.solicitud_transporte.localidad_destino in localidadesViaje:
+                print("está en las loc del viaje")
+                remitos_viaje.append(remito.nro_remito)
+        print("remitos viaje: ", remitos_viaje)
+        #falta ver como devolver únicamente el nro_remito
+        #return Response(RemitoSerializer(remitos_viaje, many=True).data)
+        return Response(remitos_viaje)
+
+class AsociarRemitosAViaje(APIView):
+    def put(self, request, id_viaje):
+        body=request.data
+        viaje=Viaje.objects.get(pk=id_viaje)
+        remitos=body['remitos']
+        remitos_obj=[]
+        for nro_remito in remitos:
+            print("hola: ",nro_remito)
+            remitos_obj.append(Remito.objects.get(pk=nro_remito))
+
+        for remito_obj in remitos_obj:
+            viaje.remitos.add(remito_obj)
+
+        #print("el viaje quedo: ",viaje.remitos.all())
+
+        return Response(ViajeSerializer(viaje).data)
+
+class CierreViaje(APIView):
+    def get(self, request, id_viaje):
+        viaje=Viaje.objects.get(pk=id_viaje)
+        remitos_viaje=viaje.remitos.all()
+        print("remitos en viaje: ", remitos_viaje)
+        #se filtran remitos en estado pagado o pendiente por un solo motivo
+        remitos_filtro=[]
+        
+        for remito in remitos_viaje:
+            print("remito en for: ", remito)
+            estado=EstadoRemito.objects.get(remito=remito, actual=True)
+            if estado.tipo_estado.tipo_estado=='pagado':
+                if remito.nro_remito==estado.remito.nro_remito:
+                    remitos_filtro.append(remito)
+
+        monto_cierre=0
+        for remito in remitos_filtro:
+            monto_cierre+=remito.valor_contrareembolso
+            sol=remito.solicitud_transporte
+            print("sol: ", sol)
+            bultos_sol=Bulto.objects.filter(solicitud=sol.id)
+            print("bultos: ", bultos_sol)
+            for bulto in bultos_sol:
+                print("bulto flete: ", bulto.valor_flete)
+                monto_cierre+=bulto.valor_flete
+
+        return Response(monto_cierre)
+
+class CambiarEstadoRemito(APIView):
+
+    def put(self, request, nro_remito):
+
+        body=request.data
+        estado_nuevo_body=body['estado_nuevo']
+        remito=Remito.objects.get(pk=nro_remito)
+        fecha_in_estado=date.today()
+        tipo_estado_anterior=TipoEstadoRemito.objects.get(pk='en_circulacion')
+        print("paso")
+        tipo_estado_nuevo=TipoEstadoRemito.objects.get(pk=estado_nuevo_body)
+        estado_anterior=EstadoRemito.objects.get(tipo_estado=tipo_estado_anterior, remito=remito)
+        estado_anterior.fecha_fin=date.today()
+        estado_anterior.actual=False
+        estado_anterior.save()
+        estado_nuevo=EstadoRemito(fecha_inicio=fecha_in_estado, tipo_estado=tipo_estado_nuevo, actual=True, remito=remito)
+        estado_nuevo.save()
+
+        return Response(EstadoRemitoSerializer(estado_nuevo).data)
+
+class SolicitudTransporteView(APIView):
+    def get(self, request, id_solicitud):
+        solicitud=SolicitudTransporte.objects.get(pk=id_solicitud)
+        return Response(SolicitudTransporteSerializer(solicitud).data)
+
+
 class SolicitudListView(generics.ListCreateAPIView):
     """es lo mismo que la clase SolicitudTransporteView"""
     queryset=SolicitudTransporte.objects.all()
@@ -139,23 +297,6 @@ class ParticularListView(generics.ListCreateAPIView):
     queryset=Particular.objects.all()
     serializer_class=ParticularSerializer
 
-class SolicitudTransporteView(APIView):
-
-    def get(self, request,format=None):
-        solicitudes=SolicitudTransporte.objects.all()
-        serializer=SolicitudTransporteSerializer(solicitudes, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        serializer=SolicitudTransporteSerializer(data=request.data)
-        if serializer.is_valid():
-            if (serializer.save()):
-                print("insertó")
-            else:
-                print("no insertó")
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SolicitudTransporteFecha(APIView):
     def get(self, request, fecha, op,format=None):

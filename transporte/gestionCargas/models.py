@@ -48,7 +48,7 @@ class Empresa(models.Model):
     id_cliente=models.OneToOneField(Cliente, on_delete=models.RESTRICT)
 
 class TipoEstadoRemito(models.Model):
-    id=models.AutoField(primary_key=True)
+    #id=models.AutoField(primary_key=True)
     TIPO_ESTADO_CHOICES=[
         ('asignado', 'Estado Asignado'),
         ('en_circulacion', 'Estado en Circulación'),
@@ -58,7 +58,7 @@ class TipoEstadoRemito(models.Model):
         ('pendiente', 'Estado Pendiente'),
         ('pagado', 'Estado Pagado'),
     ]
-    tipo_estado=models.CharField(max_length=20, choices=TIPO_ESTADO_CHOICES, default='asignado')
+    tipo_estado=models.CharField(max_length=20, choices=TIPO_ESTADO_CHOICES, default='asignado', primary_key=True)
 
 
 class SolicitudTransporte(models.Model):
@@ -102,16 +102,14 @@ class Remito(models.Model):
     fecha_asignacion=models.DateField()
     valor_flete=models.FloatField()
     valor_contrareembolso=models.FloatField()
-    medio_pago=models.CharField(max_length=20, choices=MEDIO_PAGO)
-    solicitud_transporte=models.OneToOneField(SolicitudTransporte, on_delete=models.RESTRICT, blank=True)
+    medio_pago=models.CharField(max_length=20, choices=MEDIO_PAGO, null=True)
+    solicitud_transporte=models.OneToOneField(SolicitudTransporte, on_delete=models.RESTRICT, blank=True, null=True)
 
-    #estado_actual=models.OneToOneField(EstadoRemito)
-    #historial=models.OneToOneField(HistorialEstados)
 
 class EstadoRemito(models.Model):
     id=models.AutoField(primary_key=True)
     fecha_inicio=models.DateField()
-    fecha_fin=models.DateField(blank=True)
+    fecha_fin=models.DateField(blank=True, null=True)
     tipo_estado=models.ForeignKey(TipoEstadoRemito, on_delete=models.RESTRICT)
     actual=models.BooleanField()
     remito=models.ForeignKey(Remito, on_delete=models.RESTRICT)
