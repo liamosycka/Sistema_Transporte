@@ -143,11 +143,16 @@ class RemitosChoferEstado(APIView):
         legajo=body['legajo']
         estado=body['estado']
         remitos=Remito.objects.filter(legajo_chofer=legajo)
-        remitos_estado=[]
-        #se obtienen todos los números de remito de los estados solicitados.
-        for remito in remitos:
-            remitos_estado+=EstadoRemito.objects.filter(tipo_estado=estado, remito=remito).values('remito')
-        return Response(remitos_estado)
+        remitos_estado_chofer=[]
+        #filtramos los estados actuales de ese tipo_estado
+        nrosR_estados_actuales=EstadoRemito.objects.filter(actual=True, tipo_estado=estado).values('remito')
+
+        #verificamos si cada remito de cada estado es del chofer en cuestión.
+        for nro_remito in nrosR_estados_actuales:
+            remito=Remito.objects.get(pk=nro_remito['remito'])
+            if remito.legajo_chofer.legajo==legajo:
+                remitos_estado_chofer.append(remito.nro_remito)
+        return Response(remitos_estado_chofer)
 
 class AsociarSolRemito(APIView):
     def put(self, request):
