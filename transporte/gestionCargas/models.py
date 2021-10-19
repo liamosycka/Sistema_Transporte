@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.deletion import RESTRICT
+from django.core.validators import ValidationError
 
 class Localidad(models.Model):
     nombre=models.CharField(max_length=20)
@@ -26,7 +27,7 @@ class Cliente(models.Model):
         ('P', 'Cliente Particular'),
         ('E', 'Cliente Empresa'),
     ]
-    id=models.AutoField(primary_key=True)
+    id=models.CharField(max_length=10, primary_key=True)
     nombre=models.CharField(max_length=30)
     apellido=models.CharField(max_length=30)
     localidad=models.ForeignKey(Localidad, on_delete=models.RESTRICT)
@@ -62,7 +63,7 @@ class TipoEstadoRemito(models.Model):
 
 
 class SolicitudTransporte(models.Model):
-    id=models.AutoField(primary_key=True)
+    id=models.CharField(max_length=10, primary_key=True)
     fecha=models.DateField()
     remitente=models.CharField(max_length=20)
     direccion_origen=models.CharField(max_length=20)
@@ -85,12 +86,6 @@ class Bulto(models.Model):
     valor_flete=models.FloatField()
     solicitud=models.ForeignKey(SolicitudTransporte, on_delete=models.RESTRICT)
 
-class HistorialEstados(models.Model):
-    id=models.AutoField(primary_key=True)
-
-
-
-
 class Remito(models.Model):
     MEDIO_PAGO=[
         ('OR', 'Pago en Origen'),
@@ -100,8 +95,8 @@ class Remito(models.Model):
     nro_remito=models.CharField(max_length=20, primary_key=True)
     legajo_chofer=models.ForeignKey(Chofer, on_delete=models.RESTRICT)
     fecha_asignacion=models.DateField()
-    valor_flete=models.FloatField()
-    valor_contrareembolso=models.FloatField()
+    valor_flete=models.FloatField(null=True)
+    valor_contrareembolso=models.FloatField(null=True)
     medio_pago=models.CharField(max_length=20, choices=MEDIO_PAGO, null=True)
     solicitud_transporte=models.OneToOneField(SolicitudTransporte, on_delete=models.RESTRICT, blank=True, null=True)
 

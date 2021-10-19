@@ -34,9 +34,9 @@ comentar lo de abajo para usar el router de cliente
 """
 urlpatterns = [
     path('localidades/', LocalidadListView.as_view()),
-    path('solicitudes/alta/<int:id_cliente>/<int:opcion_dest_remit>/', CrearSolicitudView.as_view()),
-    path('solicitudes/bultos/<int:id_solicitud>/', AgregarBultosView.as_view()),
-    path('solicitudes/<int:id_solicitud>/', SolicitudTransporteView.as_view()),
+    path('solicitudes/alta/<str:id_cliente>/<int:opcion_dest_remit>/', CrearSolicitudView.as_view()),
+    path('solicitudes/bultos/<str:id_solicitud>/', AgregarBultosView.as_view()),
+    path('solicitudes/<str:id_solicitud>/', SolicitudTransporteView.as_view()),
     path('remitos/alta/', AltaRemitoView.as_view()),
     path('remitos/chofer-estado/', RemitosChoferEstado.as_view()),
     path('remitos/asoc-sol-remito/', AsociarSolRemito.as_view()),
