@@ -34,6 +34,7 @@ def actualizar_estado_remito(remito, es_anterior, es_nuevo):
 
 class CrearSolicitudView(APIView):
     def post(self, request, id_cliente, opcion_dest_remit):
+        print("en rama mainnn crear sol")
         try:
             body=request.data
             exito_validacion=validate_crear_solicitud(body, id_cliente, opcion_dest_remit)
