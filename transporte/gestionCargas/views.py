@@ -9,25 +9,6 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import viewsets
-<<<<<<< HEAD
-from .serializers import BultoSerializer, ClienteSerializer, EstadoRemitoSerializer, SolicitudTransporteSerializer, LocalidadSerializer
-from .serializers import ParticularSerializer, EmpresaSerializer, ViajeSerializer, RemitoSerializer
-from .serializers import ChoferSerializer, EncargadoSerializer, TipoEstadoRemitoSerializer
-from .models import EstadoRemito, Particular, SolicitudTransporte, Cliente, Bulto, Localidad, Empresa, Viaje, Remito
-from .models import Chofer, Encargado, TipoEstadoRemito
-
-"""
-----------------------------------------------------------------------------------------"""
-class LocalidadViewSet(viewsets.ModelViewSet):
-    serializer_class=LocalidadSerializer
-    queryset=Localidad.objects.all()
-
-class ClienteViewSet(viewsets.ModelViewSet):
-    """esto encapsula todas las operaciones CRUD básicas y con el router
-    creamos automáticamente todos los endpoints requeridos"""
-    serializer_class=ClienteSerializer
-    queryset=Cliente.objects.all()
-=======
 
 from .serializers import BultoSerializer, ClienteSerializer, EstadoRemitoSerializer, SolicitudTransporteSerializer, LocalidadSerializer
 from .serializers import ParticularSerializer, EmpresaSerializer, ViajeSerializer, RemitoSerializer
@@ -280,7 +261,6 @@ class SolicitudTransporteView(APIView):
         solicitud=SolicitudTransporte.objects.get(pk=id_solicitud)
         return Response(SolicitudTransporteSerializer(solicitud).data)
 
->>>>>>> develop
 
 class ParticularViewSet(viewsets.ModelViewSet):
     serializer_class=ParticularSerializer
@@ -332,28 +312,6 @@ class BultoView(generics.ListCreateAPIView):
     serializer_class=BultoSerializer
     def get_queryset(self):
         return Bulto.objects.filter(solicitud=self.kwargs['sol'])
-<<<<<<< HEAD
-
-class ParticularView(generics.ListCreateAPIView):
-    serializer_class=ParticularSerializer
-    def get_queryset(self):
-        return Particular.objects.get(id_cliente=self.kwargs['id_cliente'])
-        
-class LocalidadListView(generics.ListCreateAPIView):
-    queryset=Localidad.objects.all()
-    serializer_class=LocalidadSerializer
-
-class ClienteListView(generics.ListCreateAPIView):
-    queryset=Cliente.objects.all()
-    serializer_class=ClienteSerializer
-
-class ParticularListView(generics.ListCreateAPIView):
-    queryset=Particular.objects.all()
-    serializer_class=ParticularSerializer
-
-class SolicitudTransporteView(APIView):
-=======
->>>>>>> develop
 
 class ParticularView(generics.ListCreateAPIView):
     serializer_class=ParticularSerializer
