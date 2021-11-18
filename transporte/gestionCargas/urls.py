@@ -38,7 +38,7 @@ urlpatterns = [
     path('solicitudes/bultos/<str:id_solicitud>/', AgregarBultosView.as_view()),
     path('solicitudes/<str:id_solicitud>/', SolicitudTransporteView.as_view()),
     path('remitos/alta/', AltaRemitoView.as_view()),
-    path('remitos/chofer-estado/', RemitosChoferEstado.as_view()),
+    path('remitos/chofer-estado/<str:legajo>/<str:estado>/', RemitosChoferEstado.as_view()),
     path('remitos/asoc-sol-remito/', AsociarSolRemito.as_view()),
     path('viajes/<str:fecha>/', ViajeFechaView.as_view()),
     path('remitos/viaje/<int:id_viaje>/', RemitosParaViaje.as_view()),

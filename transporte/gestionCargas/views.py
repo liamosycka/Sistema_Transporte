@@ -105,14 +105,12 @@ class AgregarBultosView(APIView):
 
 
 class RemitosChoferEstado(APIView):
-    def get(self, request):
+    def get(self, request, legajo, estado):
         try:
-            body=request.data
-            exito_validacion=validate_remitos_chofer_estado(body)
+            datos={'legajo':legajo, 'estado':estado}
+            exito_validacion=validate_remitos_chofer_estado(datos)
             if(exito_validacion is False):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            legajo=body['legajo']
-            estado=body['estado']
             remitos_estado_chofer=[]
             #obtenemos los numeros de remitos de cada uno de los estados actuales y filtrados
             nrosR_estados_actuales=EstadoRemito.objects.filter(actual=True, tipo_estado=estado).values('remito')
