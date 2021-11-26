@@ -14,7 +14,7 @@ from .serializers import BultoSerializer, ClienteSerializer, EstadoRemitoSeriali
 from .serializers import ParticularSerializer, EmpresaSerializer, ViajeSerializer, RemitoSerializer
 from .serializers import ChoferSerializer, EncargadoSerializer, TipoEstadoRemitoSerializer
 from .models import EstadoRemito, Particular, SolicitudTransporte, Cliente, Bulto, Localidad, Empresa, Viaje, Remito
-from .models import Chofer, Encargado, TipoEstadoRemito
+from .models import Chofer, Encargado, TipoEstadoRemito, HistS
 
 import re
 from .views_validators import validate_crear_solicitud, validate_agregar_bultos, validate_remitos_chofer_estado
@@ -39,7 +39,7 @@ class CrearSolicitudView(APIView):
             body=request.data
             exito_validacion=validate_crear_solicitud(body, id_cliente, opcion_dest_remit)
             if exito_validacion is False:
-                return Response("Datos inválidos, intente nuevamente")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             cliente=get_object_or_404(Cliente, pk=id_cliente)
             direccion=cliente.direccion
             nombre=cliente.nombre
@@ -63,17 +63,21 @@ class CrearSolicitudView(APIView):
                 localidad_destinatario=get_object_or_404(Localidad, pk=localidad)
                 destintatario=nombre
             fecha=date.today()
-            solicitud_anterior=SolicitudTransporte.objects.last()
+            #solicitud_anterior=SolicitudTransporte.objects.last()
+            solicitud_anterior=HistS.objects.last()
             if solicitud_anterior is None:
                 id_anterior="S0"
             else:
-                id_anterior=solicitud_anterior.pk
-
+                id_anterior=solicitud_anterior.valor
             id_nuevo= "S"+str(int(id_anterior.split('S')[1])+1)
             solicitud=SolicitudTransporte(id=id_nuevo, fecha=fecha,direccion_origen=direccion_origen, \
                 remitente=remitente,localidad_origen=localidad_origen,direccion_destinatario=direccion_destinatario,\
                 destinatario=destintatario,localidad_destino=localidad_destinatario,cliente=cliente)
             solicitud.save()
+            historial=HistS(valor=id_nuevo)
+            historial.save()
+        except ValueError as ve:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response(f"{e}", status=status.HTTP_404_NOT_FOUND)
         return Response(solicitud.id)
@@ -86,7 +90,7 @@ class AgregarBultosView(APIView):
             body=request.data
             exito_validacion=validate_agregar_bultos(body, id_solicitud)
             if exito_validacion is not True:
-                return Response("Error en los datos de bultos")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             peso=body['peso']
             tipo=body['tipo']
             descripcion=body['descripcion']
@@ -98,18 +102,16 @@ class AgregarBultosView(APIView):
             return Response(f"{ve}", status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response(f"{e}", status=status.HTTP_404_NOT_FOUND)
-        return Response(BultoSerializer(bulto).data)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class RemitosChoferEstado(APIView):
-    def get(self, request):
+    def get(self, request, legajo, estado):
         try:
-            body=request.data
-            exito_validacion=validate_remitos_chofer_estado(body)
+            datos={'legajo':legajo, 'estado':estado}
+            exito_validacion=validate_remitos_chofer_estado(datos)
             if(exito_validacion is False):
-                return Response("Error en los datos")
-            legajo=body['legajo']
-            estado=body['estado']
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             remitos_estado_chofer=[]
             #obtenemos los numeros de remitos de cada uno de los estados actuales y filtrados
             nrosR_estados_actuales=EstadoRemito.objects.filter(actual=True, tipo_estado=estado).values('remito')
@@ -129,7 +131,7 @@ class AsociarSolRemito(APIView):
             body=request.data
             exito_validacion=validate_asociar_sol_remito(body)
             if exito_validacion is False:
-                return Response("Error en los datos")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             nro_remito=body['remito']
             id_solicitud=body['sol']
             medio_pago=body['m_pago']
@@ -144,18 +146,17 @@ class AsociarSolRemito(APIView):
             remito.solicitud_transporte=solicitud
             remito.save()
             actualizar_estado_remito(remito, 'asignado', 'en_circulacion')
-            
         except ValueError as ve:
             return Response(f"{ve}", status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response(f"{e}", status=status.HTTP_404_NOT_FOUND)
-        return Response(RemitoSerializer(remito).data)
+        return Response(status=status.HTTP_202_ACCEPTED)
 
 class ViajeFechaView(APIView):
     def get(self, request, fecha):
         exito_validacion=validate_viaje_fecha(fecha)
         if exito_validacion is False:
-            return Response("Error en los datos")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         viajes=Viaje.objects.filter(fecha_salida=fecha)
         return Response(ViajeSerializer(viajes, many=True).data)
 
@@ -176,12 +177,13 @@ class RemitosParaViaje(APIView):
 
 class AsociarRemitosAViaje(APIView):
     def put(self, request, id_viaje):
+ 
         try:
             body=request.data
             viaje=get_object_or_404(Viaje, pk=id_viaje)
             exito_validacion=validate_asoc_remito_viaje(body)
             if exito_validacion is False:
-                return Response("Error en los datos")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             remitos=body['remitos']
             for nro_remito in remitos:
                 remito=get_object_or_404(Remito, pk=nro_remito)
@@ -259,7 +261,7 @@ class CambiarEstadoRemito(APIView):
 
 class SolicitudTransporteView(APIView):
     def get(self, request, id_solicitud):
-        solicitud=SolicitudTransporte.objects.get(pk=id_solicitud)
+        solicitud=get_object_or_404(SolicitudTransporte, pk=id_solicitud)
         return Response(SolicitudTransporteSerializer(solicitud).data)
 
 
@@ -321,6 +323,7 @@ class ParticularView(generics.ListCreateAPIView):
         
 class LocalidadListView(generics.ListCreateAPIView):
     queryset=Localidad.objects.all()
+    #queryset=[]
     serializer_class=LocalidadSerializer
 
 class ClienteListView(generics.ListCreateAPIView):

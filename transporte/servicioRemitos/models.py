@@ -1,18 +1,8 @@
 from django.db import models
-from django.db.models.deletion import RESTRICT
-from django.core.validators import ValidationError
 
 class Localidad(models.Model):
     nombre=models.CharField(max_length=20)
     codigo_postal=models.CharField(max_length=10, primary_key=True)
-
-class Encargado(models.Model):
-    legajo=models.CharField(max_length=10, primary_key=True)
-    nombre=models.CharField(max_length=10)
-    apellido=models.CharField(max_length=10)
-    dni=models.CharField(max_length=15)
-    fecha_nac=models.DateField()
-    fecha_ingreso=models.DateField()
 
 class Chofer(models.Model):
     legajo=models.CharField(max_length=10, primary_key=True)
@@ -21,6 +11,19 @@ class Chofer(models.Model):
     dni=models.CharField(max_length=15)
     fecha_nac=models.DateField()
     fecha_ingreso=models.DateField()
+
+class TipoEstadoRemito(models.Model):
+    #id=models.AutoField(primary_key=True)
+    TIPO_ESTADO_CHOICES=[
+        ('asignado', 'Estado Asignado'),
+        ('en_circulacion', 'Estado en Circulación'),
+        ('en_viaje', 'Estado en Viaje'),
+        ('rendido', 'Estado Rendido'),
+        ('segunda_entrega', 'Estado Segunda Entrega'),
+        ('pendiente', 'Estado Pendiente'),
+        ('pagado', 'Estado Pagado'),
+    ]
+    tipo_estado=models.CharField(max_length=20, choices=TIPO_ESTADO_CHOICES, default='asignado', primary_key=True)
 
 class Cliente(models.Model):
     TIPOS_CLIENTE=[
@@ -42,25 +45,6 @@ class Particular(models.Model):
     apellido=models.CharField(max_length=20)
     fecha_nac=models.DateField()
     id_cliente=models.OneToOneField(Cliente, on_delete=models.RESTRICT)
-
-class Empresa(models.Model):
-    cuit=models.CharField(max_length=20, primary_key=True)
-    nombre=models.CharField(max_length=20)
-    id_cliente=models.OneToOneField(Cliente, on_delete=models.RESTRICT)
-
-class TipoEstadoRemito(models.Model):
-    #id=models.AutoField(primary_key=True)
-    TIPO_ESTADO_CHOICES=[
-        ('asignado', 'Estado Asignado'),
-        ('en_circulacion', 'Estado en Circulación'),
-        ('en_viaje', 'Estado en Viaje'),
-        ('rendido', 'Estado Rendido'),
-        ('segunda_entrega', 'Estado Segunda Entrega'),
-        ('pendiente', 'Estado Pendiente'),
-        ('pagado', 'Estado Pagado'),
-    ]
-    tipo_estado=models.CharField(max_length=20, choices=TIPO_ESTADO_CHOICES, default='asignado', primary_key=True)
-
 
 class SolicitudTransporte(models.Model):
     id=models.CharField(max_length=10, primary_key=True)
@@ -100,7 +84,6 @@ class Remito(models.Model):
     medio_pago=models.CharField(max_length=20, choices=MEDIO_PAGO, null=True)
     solicitud_transporte=models.OneToOneField(SolicitudTransporte, on_delete=models.RESTRICT, blank=True, null=True)
 
-
 class EstadoRemito(models.Model):
     id=models.AutoField(primary_key=True)
     fecha_inicio=models.DateField()
@@ -108,7 +91,6 @@ class EstadoRemito(models.Model):
     tipo_estado=models.ForeignKey(TipoEstadoRemito, on_delete=models.RESTRICT)
     actual=models.BooleanField()
     remito=models.ForeignKey(Remito, on_delete=models.RESTRICT)
-    #historial=models.ForeignKey(HistorialEstados, on_delete=models.RESTRICT)
 
 class Viaje(models.Model):
     id=models.AutoField(primary_key=True)
@@ -117,10 +99,3 @@ class Viaje(models.Model):
     legajo_chofer=models.ForeignKey(Chofer, on_delete=models.RESTRICT)
     remitos=models.ManyToManyField(Remito, blank=True)
     localidades=models.ManyToManyField(Localidad)
-<<<<<<< HEAD
-=======
-
-class HistS(models.Model):
-    id=models.AutoField(primary_key=True)
-    valor=models.CharField(max_length=20)
->>>>>>> develop

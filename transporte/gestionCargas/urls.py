@@ -4,14 +4,33 @@ from django.urls.conf import include
 from rest_framework.routers import DefaultRouter
 from .views import ClienteViewSet, SolicitudListView, SolicitudTransporteFecha, SolicitudTransporteView, BultoView
 from .views import ClienteListView, LocalidadListView, ParticularListView, CrearSolicitudView, AgregarBultosView
-
+from django.views.generic import TemplateView
 from .views import LocalidadViewSet, ParticularViewSet, EmpresaViewSet, ChoferViewSet, EncargadoViewSet
 from .views import SolicitudViewSet, BultoViewSet, RemitoViewSet, ViajeViewSet, EstadoRemitoViewSet
 from .views import TipoEstadoRemitoViewSet, AltaRemitoView, RemitosChoferEstado, AsociarSolRemito, ViajeFechaView
 from .views import RemitosParaViaje, AsociarRemitosAViaje, CierreViaje, CambiarEstadoRemito
+
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 """
 
 """
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Empresa Transporte API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="contact@snippets.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   url='http://127.0.0.1:8000/gestionCargas/',
+   permission_classes=(permissions.AllowAny,),
+)
+
+
 router = DefaultRouter()
 router.register(r'localidades', LocalidadViewSet, basename='localidades')
 router.register(r'clientes', ClienteViewSet, basename='clientes')
@@ -38,7 +57,7 @@ urlpatterns = [
     path('solicitudes/bultos/<str:id_solicitud>/', AgregarBultosView.as_view()),
     path('solicitudes/<str:id_solicitud>/', SolicitudTransporteView.as_view()),
     path('remitos/alta/', AltaRemitoView.as_view()),
-    path('remitos/chofer-estado/', RemitosChoferEstado.as_view()),
+    path('remitos/chofer-estado/<str:legajo>/<str:estado>/', RemitosChoferEstado.as_view()),
     path('remitos/asoc-sol-remito/', AsociarSolRemito.as_view()),
     path('viajes/<str:fecha>/', ViajeFechaView.as_view()),
     path('remitos/viaje/<int:id_viaje>/', RemitosParaViaje.as_view()),
@@ -46,6 +65,7 @@ urlpatterns = [
     path('viajes/cierre/<int:id_viaje>/', CierreViaje.as_view()),
     path('remitos/cambiar-estado/<str:nro_remito>/', CambiarEstadoRemito.as_view()),
     path('api/', include(router.urls)),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 
 ]
 
