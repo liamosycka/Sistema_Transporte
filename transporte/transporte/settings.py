@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'servicioRemitos.apps.ServicioremitosConfig',
     'corsheaders',
     'rest_framework',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [

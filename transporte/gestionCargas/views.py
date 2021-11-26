@@ -130,7 +130,7 @@ class AsociarSolRemito(APIView):
             body=request.data
             exito_validacion=validate_asociar_sol_remito(body)
             if exito_validacion is False:
-                return Response("Error en los datos")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             nro_remito=body['remito']
             id_solicitud=body['sol']
             medio_pago=body['m_pago']
@@ -145,7 +145,6 @@ class AsociarSolRemito(APIView):
             remito.solicitud_transporte=solicitud
             remito.save()
             actualizar_estado_remito(remito, 'asignado', 'en_circulacion')
-            
         except ValueError as ve:
             return Response(f"{ve}", status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -156,7 +155,7 @@ class ViajeFechaView(APIView):
     def get(self, request, fecha):
         exito_validacion=validate_viaje_fecha(fecha)
         if exito_validacion is False:
-            return Response("Error en los datos")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         viajes=Viaje.objects.filter(fecha_salida=fecha)
         return Response(ViajeSerializer(viajes, many=True).data)
 
@@ -177,12 +176,13 @@ class RemitosParaViaje(APIView):
 
 class AsociarRemitosAViaje(APIView):
     def put(self, request, id_viaje):
+ 
         try:
             body=request.data
             viaje=get_object_or_404(Viaje, pk=id_viaje)
             exito_validacion=validate_asoc_remito_viaje(body)
             if exito_validacion is False:
-                return Response("Error en los datos")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             remitos=body['remitos']
             for nro_remito in remitos:
                 remito=get_object_or_404(Remito, pk=nro_remito)

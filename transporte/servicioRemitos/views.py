@@ -14,14 +14,17 @@ from collections import namedtuple
 
 
 class RemitoViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=RemitoSerializer
     queryset=Remito.objects.all()
 
 class ChoferViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=ChoferSerializer
     queryset=Chofer.objects.all()
 
 class RemitoCompletoView(APIView):
+    swagger_schema = None
     def get(self, request, nro_remito):
         remito=get_object_or_404(Remito, pk=nro_remito)
         solicitud=remito.solicitud_transporte
@@ -33,12 +36,14 @@ class RemitoCompletoView(APIView):
         return Response(serializer.data)
 
 class HistorialEstadosRemitoView(APIView):
+    swagger_schema = None
     def get(self, request, nro_remito):
         remito=get_object_or_404(Remito, pk=nro_remito)
         historial_estados=EstadoRemito.objects.filter(remito=nro_remito)
         return Response(EstadoRemitoSerializer(historial_estados, many=True).data)
 
 class ViajesRemitoView(APIView):
+    swagger_schema = None
     def get(self, request, nro_remito):
         remito=get_object_or_404(Remito, pk=nro_remito)
         viajes=Viaje.objects.filter(remitos=nro_remito)
@@ -46,40 +51,49 @@ class ViajesRemitoView(APIView):
 
 
 class LocalidadViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=LocalidadSerializer
     queryset=Localidad.objects.all()
 
 class ClienteViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     """esto encapsula todas las operaciones CRUD básicas y con el router
     creamos automáticamente todos los endpoints requeridos"""
     serializer_class=ClienteSerializer
     queryset=Cliente.objects.all()
 
 class ParticularViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=ParticularSerializer
     queryset=Particular.objects.all()
 
 class ChoferViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=ChoferSerializer
     queryset=Chofer.objects.all()
 
 class SolicitudViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=SolicitudTransporteSerializer
     queryset=SolicitudTransporte.objects.all()
 
 class BultoViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=BultoSerializer
     queryset=Bulto.objects.all()
 
 
 class EstadoRemitoViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=EstadoRemitoSerializer
     queryset=EstadoRemito.objects.all()
 
 class TipoEstadoRemitoViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=TipoEstadoRemitoSerializer
     queryset=TipoEstadoRemito.objects.all()
 
 class ViajeViewSet(viewsets.ModelViewSet):
+    swagger_schema = None
     serializer_class=ViajeSerializer
     queryset=Viaje.objects.all()
