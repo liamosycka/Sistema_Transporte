@@ -117,10 +117,7 @@ class Viaje(models.Model):
     legajo_chofer=models.ForeignKey(Chofer, on_delete=models.RESTRICT)
     remitos=models.ManyToManyField(Remito, blank=True)
     localidades=models.ManyToManyField(Localidad)
-<<<<<<< HEAD
-=======
 
 class HistS(models.Model):
     id=models.AutoField(primary_key=True)
     valor=models.CharField(max_length=20)
->>>>>>> develop
